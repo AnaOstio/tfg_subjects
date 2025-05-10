@@ -1,4 +1,4 @@
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 import { SubjectCharacter } from '../models/subject.model';
 
 export interface ISkillCredit {
@@ -42,4 +42,25 @@ export interface ISubjectCreate {
     skills: ISkillCredit[];
     learningOutcomes: string[];
     userId: string;
+}
+
+export interface IPaginationOptions {
+    page?: number;
+    limit?: number;
+}
+
+export interface IPaginatedResult<T> {
+    data: T[];
+    total: number;
+    page: number;
+    limit: number;
+}
+
+export interface ISubjectQuery extends IPaginationOptions {
+    search?: string;
+    userId?: string;
+}
+
+export interface ISubjectBulkCreate extends Omit<ISubjectCreate, 'userId'> {
+    userId: mongoose.Types.ObjectId;
 }
