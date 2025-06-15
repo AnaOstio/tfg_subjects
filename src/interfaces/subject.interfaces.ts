@@ -1,5 +1,4 @@
 import mongoose, { Document } from 'mongoose';
-import { SubjectCharacter } from '../models/subject.model';
 
 export interface ISkillCredit {
     skillId: string;
