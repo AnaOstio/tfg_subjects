@@ -1,12 +1,5 @@
 import { Router } from 'express';
-import {
-    createSubjectController,
-    getSubjectsController,
-    getSubjectByIdController,
-    getSubjectsByMemoryIdController,
-    updateSubjectController,
-    deleteSubjectController
-} from '../controllers/subject.controller';
+import { create, deleteSubject, getAll, getById, getByTitleMemory, update } from '../controllers/subject.controller';
 
 const router = Router();
 
@@ -41,7 +34,7 @@ const router = Router();
  *       500:
  *         description: Error interno del servidor
  */
-router.post('/', createSubjectController);
+router.post('/', create);
 
 /**
  * @openapi
@@ -80,7 +73,7 @@ router.post('/', createSubjectController);
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/', getSubjectsController);
+router.get('/', getAll);
 
 /**
  * @openapi
@@ -106,7 +99,7 @@ router.get('/', getSubjectsController);
  *       404:
  *         description: Subject no encontrado
  */
-router.get('/:id', getSubjectByIdController);
+router.get('/:id', getById);
 
 /**
  * @openapi
@@ -132,7 +125,7 @@ router.get('/:id', getSubjectByIdController);
  *               items:
  *                 $ref: '#/components/schemas/Subject'
  */
-router.get('/by-memory/:titleMemoryId', getSubjectsByMemoryIdController);
+router.get('/by-memory/:titleMemoryId', getByTitleMemory);
 
 /**
  * @openapi
@@ -172,7 +165,7 @@ router.get('/by-memory/:titleMemoryId', getSubjectsByMemoryIdController);
  *       404:
  *         description: Subject no encontrado
  */
-router.put('/:id', updateSubjectController);
+router.put('/:id', update);
 
 /**
  * @openapi
@@ -200,6 +193,6 @@ router.put('/:id', updateSubjectController);
  *       404:
  *         description: Subject no encontrado
  */
-router.delete('/:id', deleteSubjectController);
+router.delete('/:id', deleteSubject);
 
 export default router;

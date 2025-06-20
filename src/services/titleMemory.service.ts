@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const TITLE_MEMORY_SERVICE_URL = process.env.TITLE_MEMORY_SERVICE_URL || 'http://localhost:3003';
 
+// Este de aqui deberia de ir a permisos jajajjaj
 export const validateTitleMemoryOwnership = async (titleMemoryId: string, userId: string): Promise<boolean> => {
     try {
         const response = await axios.post(`${TITLE_MEMORY_SERVICE_URL}/api/title-memories/check-title`, {

@@ -5,12 +5,12 @@ import {
     getSubjectById,
     getSubjectsByMemoryId,
     updateSubject,
-    deleteSubject
+    deleteSubject as deleteSubjectService
 } from '../services/subject.service';
 import { validateToken } from '../services/auth.service';
 import { validateTitleMemoryOwnership, validateSkills, validateLearningOutcomes } from '../services/titleMemory.service';
 
-export const createSubjectController = async (req: Request, res: Response) => {
+export const create = async (req: Request, res: Response) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ message: 'Token missing' });
 
@@ -42,7 +42,7 @@ export const createSubjectController = async (req: Request, res: Response) => {
     }
 };
 
-export const getSubjectsController = async (req: Request, res: Response) => {
+export const getAll = async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
 
@@ -50,18 +50,18 @@ export const getSubjectsController = async (req: Request, res: Response) => {
     res.json(subjects);
 };
 
-export const getSubjectByIdController = async (req: Request, res: Response) => {
+export const getById = async (req: Request, res: Response) => {
     const subject = await getSubjectById(req.params.id);
     if (!subject) return res.status(404).json({ message: 'Subject not found' });
     res.json(subject);
 };
 
-export const getSubjectsByMemoryIdController = async (req: Request, res: Response) => {
+export const getByTitleMemory = async (req: Request, res: Response) => {
     const subjects = await getSubjectsByMemoryId(req.params.titleMemoryId);
     res.json(subjects);
 };
 
-export const updateSubjectController = async (req: Request, res: Response) => {
+export const update = async (req: Request, res: Response) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ message: 'Token missing' });
 
@@ -76,7 +76,7 @@ export const updateSubjectController = async (req: Request, res: Response) => {
     res.json(updated);
 };
 
-export const deleteSubjectController = async (req: Request, res: Response) => {
+export const deleteSubject = async (req: Request, res: Response) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ message: 'Token missing' });
 
@@ -87,6 +87,6 @@ export const deleteSubjectController = async (req: Request, res: Response) => {
     if (!subject) return res.status(404).json({ message: 'Subject not found' });
     if (subject.userId.toString() !== userId) return res.status(403).json({ message: 'Unauthorized' });
 
-    await deleteSubject(req.params.id);
+    await deleteSubjectService(req.params.id);
     res.status(204).send();
 };
