@@ -97,3 +97,13 @@ export const deleteSubject = async (req: Request, res: Response) => {
     await deleteSubjectService(req.params.id);
     res.status(204).send();
 };
+
+export const changeStatus = async (req: Request, res: Response) => {
+    const { status } = req.body;
+    const id = req.params.titleMemoryId;
+    const subject = await getSubjectsByMemoryId(id);
+    if (!subject) return res.status(404).json({ message: 'Subject not found' });
+
+    const updatedSubject = await updateSubject(subject[0]._id.toString(), { status });
+    res.json(updatedSubject);
+};

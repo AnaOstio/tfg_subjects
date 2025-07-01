@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { create, deleteSubject, getAll, getById, getByTitleMemory, update } from '../controllers/subject.controller';
+import { changeStatus, create, deleteSubject, getAll, getById, getByTitleMemory, update } from '../controllers/subject.controller';
 
 const router = Router();
 
@@ -194,5 +194,7 @@ router.put('/:id', update);
  *         description: Subject no encontrado
  */
 router.delete('/:id', deleteSubject);
+
+router.put('/change-status/:titleMemoryId', changeStatus)
 
 export default router;
