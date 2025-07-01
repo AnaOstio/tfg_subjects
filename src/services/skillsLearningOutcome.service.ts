@@ -19,3 +19,21 @@ export const validateLearningOutcomes = async (learningOutcomesIds: string[]): P
         return false;
     }
 };
+
+export const getSkillsByIds = async (skillIds: string[]): Promise<any[]> => {
+    try {
+        const response = await axios.post(`${SKILLS_SERVICE_URL}/api/skills/getAll`, { skillIds });
+        return response.data;
+    } catch (error) {
+        throw new Error('Error fetching skills');
+    }
+}
+
+export const getLearningOutcomesByIds = async (learningOutcomesIds: string[]): Promise<any[]> => {
+    try {
+        const response = await axios.post(`${SKILLS_SERVICE_URL}/api/learning-outcomes/getAll`, { learningOutcomesIds });
+        return response.data;
+    } catch (error) {
+        throw new Error('Error fetching learning outcomes');
+    }
+}

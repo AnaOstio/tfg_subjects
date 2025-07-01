@@ -9,6 +9,7 @@ import {
 } from '../services/subject.service';
 import { validateToken } from '../services/auth.service';
 import { validateTitleMemoryOwnership, validateSkills, validateLearningOutcomes } from '../services/titleMemory.service';
+import { getLearningOutcomesByIds, getSkillsByIds } from '../services/skillsLearningOutcome.service';
 
 export const create = async (req: Request, res: Response) => {
     const token = req.headers.authorization?.split(' ')[1];
@@ -53,7 +54,13 @@ export const getAll = async (req: Request, res: Response) => {
 export const getById = async (req: Request, res: Response) => {
     const subject = await getSubjectById(req.params.id);
     if (!subject) return res.status(404).json({ message: 'Subject not found' });
-    res.json(subject);
+
+    const skills = subject.skills ? Array.from(subject.skills?.keys()) : [];
+    const validSkills = await getSkillsByIds(skills);
+
+    const learningsOutcomes = subject.learningsOutcomes;
+    const validLearningOutcomes = await getLearningOutcomesByIds(learningsOutcomes.map(lo => lo.toString()));
+    res.json({ subject, validSkills, validLearningOutcomes });
 };
 
 export const getByTitleMemory = async (req: Request, res: Response) => {
