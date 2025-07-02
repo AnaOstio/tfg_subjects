@@ -8,9 +8,10 @@ export const createSubject = async (data: any) => {
 
 export const getSubjects = async (page: number, limit: number) => {
     const skip = (page - 1) * limit;
+    const filter = { status: { $ne: 'deleted' } };
     const [subjects, total] = await Promise.all([
-        Subject.find().skip(skip).limit(limit),
-        Subject.countDocuments()
+        Subject.find(filter).skip(skip).limit(limit),
+        Subject.countDocuments(filter)
     ]);
     return {
         data: subjects,
