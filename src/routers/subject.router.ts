@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { changeStatus, create, deleteSubject, getAll, getById, getByTitleMemory, update } from '../controllers/subject.controller';
+import { changeStatus, create, createFromFiles, deleteSubject, getAll, getById, getByTitleMemory, update } from '../controllers/subject.controller';
+import { uploadMemory } from '../config/upload';
 
 const router = Router();
 
@@ -196,5 +197,7 @@ router.put('/:id', update);
 router.delete('/:id', deleteSubject);
 
 router.put('/change-status/:titleMemoryId', changeStatus)
+
+router.post('/from-file', uploadMemory.array('files'), createFromFiles)
 
 export default router;

@@ -38,3 +38,13 @@ export const validateLearningOutcomes = async (titleMemoryId: string, learningOu
         return false;
     }
 };
+
+export const getTitleMemoryById = async (titleMemoryId: string): Promise<any> => {
+    try {
+        const response = await axios.get(`${TITLE_MEMORY_SERVICE_URL}/api/title-memories/${titleMemoryId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching title memory:', error);
+        return null;
+    }
+}
