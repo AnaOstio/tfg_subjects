@@ -5,7 +5,9 @@ import {
     getSubjectById,
     getSubjectsByMemoryId,
     updateSubject,
-    deleteSubject as deleteSubjectService
+    deleteSubject as deleteSubjectService,
+    replaceSkills,
+    replaceOutcomes
 } from '../services/subject.service';
 import { validateToken } from '../services/auth.service';
 import { validateTitleMemoryOwnership, validateSkills, validateLearningOutcomes, getTitleMemoryById } from '../services/titleMemory.service';
@@ -173,4 +175,40 @@ export const createFromFiles = async (req: Request, res: Response) => {
     } catch (err) {
         res.status(500).json({ message: 'Error creating subjects from files', error: err });
     }
+}
+
+export const updateSkills = async (req: Request, res: Response) => {
+    console.log('Updating skills...');
+    const { lastSkill, newSkill } = req.body;
+    if (!lastSkill || !newSkill) {
+        return res.status(400).json({ message: 'Skills and titleMemoryId are required' });
+    }
+
+    console.log('Updating skills:', { lastSkill, newSkill });
+
+    try {
+        await replaceSkills(newSkill, lastSkill);
+    } catch (error) {
+        return res.status(500).json({ message: 'Error updating skills', error });
+    }
+
+    res.json({ message: 'Skills validated successfully' });
+}
+
+export const updateOutcomes = async (req: Request, res: Response) => {
+    console.log('Updating skills...');
+    const { lastOutcomes, newOutcome } = req.body;
+    if (!lastOutcomes || !newOutcome) {
+        return res.status(400).json({ message: 'Skills and titleMemoryId are required' });
+    }
+
+    console.log('Updating skills:', { lastOutcomes, newOutcome });
+
+    try {
+        await replaceOutcomes(newOutcome, lastOutcomes);
+    } catch (error) {
+        return res.status(500).json({ message: 'Error updating skills', error });
+    }
+
+    res.json({ message: 'Skills validated successfully' });
 }

@@ -38,3 +38,43 @@ export const updateSubject = async (id: string, update: any) => {
 export const deleteSubject = async (id: string) => {
     return await Subject.findByIdAndDelete(id);
 };
+
+export const replaceSkills = async (newOutcomeId: string, oldOutcomeIds: string[]) => {
+    if (!newOutcomeId || !oldOutcomeIds?.length) {
+        throw new Error('Debes indicar newOutcomeId y al menos un oldOutcomeId');
+    }
+
+    const renameMap: Record<string, string> = {};
+    for (const oldId of oldOutcomeIds) {
+        renameMap[`skills.${oldId}`] = `skills.${newOutcomeId}`;
+    }
+
+    const filter = {
+        $or: oldOutcomeIds.map(id => ({ [`skills.${id}`]: { $exists: true } }))
+    };
+
+    return await Subject.updateMany(filter, { $rename: renameMap }).exec();
+}
+
+export const replaceOutcomes = async (newOutcomeId: string, oldOutcomeIds: string[]) => {
+    if (!newOutcomeId || !oldOutcomeIds?.length) {
+        throw new Error('Debes proporcionar newOutcomeId y al menos un oldOutcomeId');
+    }
+
+    const newOid = new Types.ObjectId(newOutcomeId);
+    const oldOids = oldOutcomeIds.map(id => new Types.ObjectId(id));
+
+    // Solo los documentos que contengan al menos uno de los antiguos
+    const filter = { learningsOutcomes: { $in: oldOids } };
+
+    // Uso de arrayFilters para reemplazar en línea cada elemento coincidente
+    return Subject.updateMany(
+        filter,
+        { $set: { 'learningsOutcomes.$[elem]': newOid } },
+        {
+            arrayFilters: [
+                { 'elem': { $in: oldOids } }
+            ]
+        }
+    ).exec();
+}

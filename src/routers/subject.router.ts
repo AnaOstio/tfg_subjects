@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { changeStatus, create, createFromFiles, deleteSubject, getAll, getById, getByTitleMemory, update } from '../controllers/subject.controller';
+import { changeStatus, create, createFromFiles, deleteSubject, getAll, getById, getByTitleMemory, update, updateOutcomes, updateSkills } from '../controllers/subject.controller';
 import { uploadMemory } from '../config/upload';
 
 const router = Router();
@@ -127,6 +127,9 @@ router.get('/:id', getById);
  *                 $ref: '#/components/schemas/Subject'
  */
 router.get('/by-memory/:titleMemoryId', getByTitleMemory);
+
+router.put('/update-skills', updateSkills)
+router.put('/update/outcomes', updateOutcomes)
 
 /**
  * @openapi
