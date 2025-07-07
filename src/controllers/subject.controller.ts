@@ -8,10 +8,10 @@ import {
     deleteSubject as deleteSubjectService,
     replaceSkills,
     replaceOutcomes
-} from '../services/subject.service';
-import { validateToken } from '../services/auth.service';
-import { validateTitleMemoryOwnership, validateSkills, validateLearningOutcomes, getTitleMemoryById } from '../services/titleMemory.service';
-import { getLearningOutcomesByIds, getSkillsByIds } from '../services/skillsLearningOutcome.service';
+} from '../services/subject.services';
+import { validateToken } from '../services/auth.services';
+import { validateTitleMemoryOwnership, validateSkills, validateLearningOutcomes, getTitleMemoryById } from '../services/titleMemory.services';
+import { getLearningOutcomesByIds, getSkillsByIds } from '../services/skillsLearningOutcome.services';
 import { Types } from 'mongoose';
 
 export const create = async (req: Request, res: Response) => {
