@@ -55,15 +55,19 @@ export const getAll = async (req: Request, res: Response) => {
 };
 
 export const getById = async (req: Request, res: Response) => {
-    const subject = await getSubjectById(req.params.id);
-    if (!subject) return res.status(404).json({ message: 'Subject not found' });
+    try {
+        const subject = await getSubjectById(req.params.id);
+        if (!subject) return res.status(404).json({ message: 'Subject not found' });
 
-    const skills = subject.skills ? Array.from(subject.skills?.keys()) : [];
-    const validSkills = await getSkillsByIds(skills);
+        const skills = subject.skills ? Array.from(subject.skills?.keys()) : [];
+        const validSkills = await getSkillsByIds(skills);
 
-    const learningsOutcomes = subject.learningsOutcomes;
-    const validLearningOutcomes = await getLearningOutcomesByIds(learningsOutcomes.map(lo => lo.toString()));
-    res.json({ subject, validSkills, validLearningOutcomes });
+        const learningsOutcomes = subject.learningsOutcomes;
+        const validLearningOutcomes = await getLearningOutcomesByIds(learningsOutcomes.map(lo => lo.toString()));
+        res.json({ subject, validSkills, validLearningOutcomes });
+    } catch (error) {
+        return res.status(500).json({ message: 'Internal server error', error });
+    }
 };
 
 export const getByTitleMemory = async (req: Request, res: Response) => {
