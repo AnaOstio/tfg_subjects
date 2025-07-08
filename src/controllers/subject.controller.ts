@@ -1,16 +1,20 @@
-import { Request, Response } from 'express';
+import e, { Request, Response } from 'express';
 import {
     createSubject,
     getSubjects,
     getSubjectById,
     getSubjectsByMemoryId,
     updateSubject,
-    deleteSubject
-} from '../services/subject.service';
-import { validateToken } from '../services/auth.service';
-import { validateTitleMemoryOwnership, validateSkills, validateLearningOutcomes } from '../services/titleMemory.service';
+    deleteSubject as deleteSubjectService,
+    replaceSkills,
+    replaceOutcomes
+} from '../services/subject.services';
+import { validateToken } from '../services/auth.services';
+import { validateTitleMemoryOwnership, validateSkills, validateLearningOutcomes, getTitleMemoryById } from '../services/titleMemory.services';
+import { getLearningOutcomesByIds, getSkillsByIds } from '../services/skillsLearningOutcome.services';
+import { Types } from 'mongoose';
 
-export const createSubjectController = async (req: Request, res: Response) => {
+export const create = async (req: Request, res: Response) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ message: 'Token missing' });
 
@@ -42,7 +46,7 @@ export const createSubjectController = async (req: Request, res: Response) => {
     }
 };
 
-export const getSubjectsController = async (req: Request, res: Response) => {
+export const getAll = async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
 
@@ -50,18 +54,28 @@ export const getSubjectsController = async (req: Request, res: Response) => {
     res.json(subjects);
 };
 
-export const getSubjectByIdController = async (req: Request, res: Response) => {
-    const subject = await getSubjectById(req.params.id);
-    if (!subject) return res.status(404).json({ message: 'Subject not found' });
-    res.json(subject);
+export const getById = async (req: Request, res: Response) => {
+    try {
+        const subject = await getSubjectById(req.params.id);
+        if (!subject) return res.status(404).json({ message: 'Subject not found' });
+
+        const skills = subject.skills ? Array.from(subject.skills?.keys()) : [];
+        const validSkills = await getSkillsByIds(skills);
+
+        const learningsOutcomes = subject.learningsOutcomes;
+        const validLearningOutcomes = await getLearningOutcomesByIds(learningsOutcomes.map(lo => lo.toString()));
+        res.json({ subject, validSkills, validLearningOutcomes });
+    } catch (error) {
+        return res.status(500).json({ message: 'Internal server error', error });
+    }
 };
 
-export const getSubjectsByMemoryIdController = async (req: Request, res: Response) => {
+export const getByTitleMemory = async (req: Request, res: Response) => {
     const subjects = await getSubjectsByMemoryId(req.params.titleMemoryId);
     res.json(subjects);
 };
 
-export const updateSubjectController = async (req: Request, res: Response) => {
+export const update = async (req: Request, res: Response) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ message: 'Token missing' });
 
@@ -76,7 +90,7 @@ export const updateSubjectController = async (req: Request, res: Response) => {
     res.json(updated);
 };
 
-export const deleteSubjectController = async (req: Request, res: Response) => {
+export const deleteSubject = async (req: Request, res: Response) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ message: 'Token missing' });
 
@@ -87,6 +101,118 @@ export const deleteSubjectController = async (req: Request, res: Response) => {
     if (!subject) return res.status(404).json({ message: 'Subject not found' });
     if (subject.userId.toString() !== userId) return res.status(403).json({ message: 'Unauthorized' });
 
-    await deleteSubject(req.params.id);
+    await deleteSubjectService(req.params.id);
     res.status(204).send();
 };
+
+export const changeStatus = async (req: Request, res: Response) => {
+    const { status } = req.body;
+    const id = req.params.titleMemoryId;
+    const subject = await getSubjectsByMemoryId(id);
+    if (!subject) return res.status(404).json({ message: 'Subject not found' });
+
+    const updatedSubject = await updateSubject(subject[0]._id.toString(), { status });
+    res.json(updatedSubject);
+};
+
+export const createFromFiles = async (req: Request, res: Response) => {
+    try {
+        const auth = req.headers.authorization?.split(' ')[1];
+        if (!auth) return res.status(401).json({ message: 'Token missing' });
+
+        const { isValid, userId } = await validateToken(auth);
+        if (!isValid || !userId) return res.status(403).json({ message: 'Invalid token' });
+
+        const files = req.files as Express.Multer.File[];
+        if (!files || files.length === 0) {
+            return res.status(400).json({ message: 'No files uploaded' });
+        }
+
+        const memoryId = req.body.memoryId;
+        if (!memoryId) {
+            return res.status(400).json({ message: 'Memory ID is required' });
+        }
+
+        // obtencion de la memoria
+        const titleMemory = await getTitleMemoryById(memoryId);
+        const learningOutcomes = titleMemory?.learningOutcomes || [];
+
+        const subjects = [];
+        for (const file of files) {
+            const content = file.buffer.toString('utf-8');
+            let jsonArray: any;
+
+            try {
+                jsonArray = JSON.parse(content);
+            } catch (err) {
+                return res.status(400).json({ message: 'Invalid JSON format in file', error: err });
+            }
+
+            for (const subjectData of jsonArray) {
+
+                // Validate and set userId
+                subjectData.userId = userId;
+
+                // Validate titleMemory ownership
+                const subjectSkills = Object.keys(subjectData.skills || {});
+                const allExist = subjectSkills
+                    .every(id => titleMemory.skills.some((skill: any) => skill._id === id));
+
+                if (!allExist) {
+                    return res.status(400).json({ message: 'Some skills do not exist in the title memory' });
+                }
+
+                const filtered = titleMemory.learningOutcomes.filter((outcome: any) =>
+                    outcome.skills_id.every((id: any) => subjectSkills.includes(id))
+                );
+
+                subjectData.titleMemoryId = memoryId;
+                subjectData.learningOutcomes = filtered.map((outcome: any) => new Types.ObjectId(outcome._id));
+
+                const newSubject = await createSubject(subjectData);
+                subjects.push(newSubject);
+            }
+        }
+        res.status(201).json({ message: 'Subjects created successfully', subjects, count: subjects.length, memoryId });
+
+
+    } catch (err) {
+        res.status(500).json({ message: 'Error creating subjects from files', error: err });
+    }
+}
+
+export const updateSkills = async (req: Request, res: Response) => {
+    console.log('Updating skills...');
+    const { lastSkill, newSkill } = req.body;
+    if (!lastSkill || !newSkill) {
+        return res.status(400).json({ message: 'Skills and titleMemoryId are required' });
+    }
+
+    console.log('Updating skills:', { lastSkill, newSkill });
+
+    try {
+        await replaceSkills(newSkill, lastSkill);
+    } catch (error) {
+        return res.status(500).json({ message: 'Error updating skills', error });
+    }
+
+    res.json({ message: 'Skills validated successfully' });
+}
+
+export const updateOutcomes = async (req: Request, res: Response) => {
+    console.log('Updating skills...');
+    const { lastOutcomes, newOutcome } = req.body;
+    if (!lastOutcomes || !newOutcome) {
+        return res.status(400).json({ message: 'Skills and titleMemoryId are required' });
+    }
+
+    console.log('Updating skills:', { lastOutcomes, newOutcome });
+
+    try {
+        await replaceOutcomes(newOutcome, lastOutcomes);
+    } catch (error) {
+        return res.status(500).json({ message: 'Error updating skills', error });
+    }
+
+    res.json({ message: 'Skills validated successfully' });
+}
